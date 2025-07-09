@@ -58,8 +58,8 @@ s32 g_JpnKerning[13 * 13];
 #endif
 
 struct blendsettings g_Blend;
-Gfx *var800a4634;
-Gfx *var800a4638;
+Gfx *var800a4634; // Text and "wormhole" draw list?
+Gfx *gdl2_e; // This seems to just be the end of the previous list
 #if VERSION == VERSION_JPN_FINAL
 struct fontchar g_TmpJpnChar;
 #endif
@@ -492,9 +492,11 @@ Gfx *text0f153ab0(Gfx *gdl)
 
 	allocation = gfxAllocate(sizeof(Gfx) * 530);
 
+	// Allocate new display list
 	var800a4634 = allocation;
-	var800a4638 = allocation + 530;
+	gdl2_e = allocation + 530;
 
+	// Create a branch from the master display list to this display list
 	gSPDisplayList(gdl++, var800a4634);
 
 	gdl = func0f0d4c80(gdl);

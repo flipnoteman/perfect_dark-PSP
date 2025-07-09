@@ -237,6 +237,10 @@ void schedSubmitTask(OSSched *sc, OSScTask *t)
 	}
 }
 
+/*
+ * This function checks for initialization and will update frame buffers/aspect
+ * ratios if the window changes size. May not be necessary for PSP
+ */
 void schedStartFrame(OSSched *sc)
 {
 	videoStartFrame();
@@ -258,9 +262,9 @@ void schedAudioFrame(OSSched *sc)
  * Handle a retrace (vsync) event.
  *
  * Audio tasks are scheduled based on retrace + a timer (approximately 6ms).
- * On NTSC, this is done on every second frame if 8MB, or every second frame
+ * On NTSC, this is done on every frame if 8MB, or every second frame
  * if 4MB. I guess less memory means the audio queue has to be kept smaller
- * and processed more frequently. On PAL, it's every second frame regardless.
+ * and processed less frequently. On PAL, it's every second frame regardless.
  *
  * Controller input is polled here.
  *
@@ -297,7 +301,7 @@ void schedEndFrame(OSSched *sc)
 	sndHandleRetrace();
 	schedAudioFrame(sc);
 	schedRenderCrashPeriodically(sc->frameCount);
-	videoEndFrame();
+	videoEndFrame(); // Calculate fps and end gfx frame
 
 	if (g_MainIsBooting == 0) {
 		schedConsiderScreenshot();

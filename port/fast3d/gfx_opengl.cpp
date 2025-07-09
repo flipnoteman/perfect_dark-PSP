@@ -1,3 +1,5 @@
+#include "os_convert.h"
+#include "system.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -234,22 +236,25 @@ static void gfx_opengl_set_use_alpha(bool use_alpha, bool modulate) {
 
 
 static void gfx_opengl_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_t buf_vbo_num_tris) {
-    const int stride_floats = 9; // not 8
+    const int stride_floats = 10; // not 8
     const int stride_bytes = stride_floats * sizeof(float);
-
+    
+    sysLogPrintf(LOG_NOTE, "V0: x=%.3f y=%.3f z=%.3f w=%.3f u=%.3f v=%.3f\n",
+        buf_vbo[0], buf_vbo[1], buf_vbo[2], buf_vbo[3],
+        buf_vbo[4], buf_vbo[5]);
+    
     if (!buf_vbo || buf_vbo_num_tris == 0) return;
-
-
+    
     glMatrixMode(GL_MODELVIEW);
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
-    glColorPointer(4, GL_FLOAT, stride_bytes, buf_vbo + 5);
 
-    glVertexPointer(3, GL_FLOAT, stride_bytes, buf_vbo);
-    glTexCoordPointer(2, GL_FLOAT, stride_bytes, buf_vbo + 3);
-
+    glVertexPointer(4, GL_FLOAT, stride_bytes, buf_vbo);
+    glTexCoordPointer(2, GL_FLOAT, stride_bytes, buf_vbo + 4);
+    glColorPointer(4, GL_FLOAT, stride_bytes, buf_vbo + 6);
+    
     glEnable(GL_TEXTURE_2D);
     
     glDrawArrays(GL_TRIANGLES, 0, buf_vbo_num_tris * 3);
@@ -258,6 +263,12 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisable(GL_TEXTURE_2D);
+    
+    glBegin(GL_TRIANGLES);
+    glTexCoord2f(0,0);  glVertex3f( 0, 0, -1 );
+    glTexCoord2f(1,0);  glVertex3f( 1, 0, -1 );
+    glTexCoord2f(0,1);  glVertex3f( 0, 1, -1 );
+    glEnd();
 
 }
 
@@ -269,9 +280,12 @@ static void gfx_opengl_init(void) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glMatrixMode(GL_PROJECTION);
-
+    glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
-
+    glLoadIdentity();
+    
+//     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    
     glClearColor(0.0, 0.0, 0.0, 1.0);
 }
 

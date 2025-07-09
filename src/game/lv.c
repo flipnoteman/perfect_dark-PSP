@@ -1031,16 +1031,20 @@ Gfx *lvRender(Gfx *gdl)
 	func0f0d5a7c();
 #endif
 
+	// If stage is title stage
 	if (g_Vars.stagenum == STAGE_TITLE
 			|| (g_Vars.stagenum == STAGE_TEST_OLD && titleIsKeepingMode())) {
+		// Setup basic texture?
 		gSPDisplayList(gdl++, &var800613a0);
 
+		// If zbuffer is enabled, setup geometry mode with that in mind
 		if (debugIsZBufferDisabled()) {
 			gSPDisplayList(gdl++, &var80061360);
 		} else {
 			gSPDisplayList(gdl++, &var80061380);
 		}
 
+		// Setup zbuffer for single or split screen
 		gdl = viPrepareZbuf(gdl);
 		gdl = vi0000b1d0(gdl);
 
@@ -1049,7 +1053,9 @@ Gfx *lvRender(Gfx *gdl)
 				(viGetViewLeft() + viGetViewWidth()) * 4.0f,
 				(viGetViewTop() + viGetViewHeight()) * 4.0f);
 
+		// Render title screen
 		gdl = titleRender(gdl);
+		// setup title fade
 		gdl = lvRenderFade(gdl);
 	} else if (g_Vars.stagenum == STAGE_BOOTPAKMENU) {
 		gSPClipRatio(gdl++, FRUSTRATIO_2);
@@ -1217,6 +1223,7 @@ Gfx *lvRender(Gfx *gdl)
 				g_Vars.currentplayer->gunctrl.loadall = bgunLoadAll();
 			}
 
+			// If screen is locks
 			if (g_Vars.lockscreen) {
 				gdl = bviewDrawMotionBlur(gdl, 0xffffffff, 255);
 				g_Vars.lockscreen--;

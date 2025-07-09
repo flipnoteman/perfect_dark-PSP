@@ -8,11 +8,15 @@ rm -rf build-psp
 psp-cmake -S . -B build-psp \
     -DBUILD_PSP=ON \
     -DROMID=ntsc-final \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_PRX=1
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DBUILD_PRX=1 \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=1 
 
 # Build 
-cmake --build build-psp -j 4
+cmake --build build-psp -j 8
+
+# Move compile_commands.json to source root for clangd Only needs to happen once
+# ln -s ./build-psp/compile_commands.json .
 
 #copy the game data executable directory
 cp -r data build-psp/

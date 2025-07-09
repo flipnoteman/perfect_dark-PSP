@@ -4208,7 +4208,7 @@ void fileLoad(u8 *dst, u32 allocationlen, romptr_t *romaddrptr, struct fileinfo 
 
 #ifndef PLATFORM_N64
 	// byteswap/preprocess file according to g_LoadType right after inflating it
-	const u32 dstsize = allocationlen ? info->loadedsize : romsize; 
+	const u32 dstsize = allocationlen ? info->loadedsize : romsize;
 	romdataFilePreprocess(filenum, g_LoadType, dst, dstsize, &info->loadedsize);
 	g_LoadType = LOADTYPE_NONE;
 #endif
@@ -4371,12 +4371,18 @@ void fileSetSize(s32 filenum, void *ptr, u32 size, bool reallocate)
 	}
 }
 
+/*
+ * This only does something if arg0 = 4.
+ *
+ * If it is, iterate through files, and set their loadedsize to 0.
+ * Effectively soft unloading them
+	*/
 void filesStop(u8 arg0)
 {
 	s32 i;
 
-	// Minus 1 because the last entry in the file table is just a marker
-	for (i = 1; i < ARRAYCOUNT(g_FileTable) - 1; i++) {
+	// Iterate through files. Set their loaded values to 0
+	for (i = 1; i < NUM_FILES; i++) {
 		if (arg0 == 4) {
 			g_FileInfo[i].loadedsize = 0;
 		}

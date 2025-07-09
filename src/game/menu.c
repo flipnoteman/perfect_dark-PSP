@@ -47,6 +47,7 @@
 #include "lib/mtx.h"
 #include "lib/lib_317f0.h"
 #include "data.h"
+#include "system.h"
 #include "types.h"
 #ifndef PLATFORM_N64
 #include "video.h"
@@ -2680,6 +2681,7 @@ Gfx *dialogRender(Gfx *gdl, struct menudialog *dialog, struct menu *menu, bool l
 		bgy1 += LINEHEIGHT;
 	}
 
+	// This is the "wormhole" effect behind the dialog window in the menus
 	// Render the walls/floor/ceiling coming from the projection source.
 	// Each surface is rendered a second time with the colours swapped.
 	// The order is top, right, bottom, left.
@@ -2967,8 +2969,10 @@ Gfx *dialogRender(Gfx *gdl, struct menudialog *dialog, struct menu *menu, bool l
 							u32 colour;
 							u32 colour2;
 
+							uint32_t weight = 128; // OG was 128 or something
+
 							colour2 = MIXCOLOUR(dialog, item_focused_outer);
-							colour = colourBlend(colour2, colour2 & 0xffffff00, 127);
+							colour = colourBlend(colour2, colour2 & 0xffffff00, weight);
 
 							gdl = textSetPrimColour(gdl, colour);
 							gDPFillRectangleScaled(gdl++, x1, y1, x2, y2);
@@ -5373,6 +5377,7 @@ Gfx *menuRenderBackgroundLayer2(Gfx *gdl, u8 bg, f32 frac)
 	return gdl;
 }
 
+/// Render the player menu
 Gfx *menuRender(Gfx *gdl)
 {
 	static u32 usepiece = 1;
@@ -5389,15 +5394,19 @@ Gfx *menuRender(Gfx *gdl)
 
 	gSPDisplayList(gdl++, var800613a0);
 
-	// Render the background
+	// Render the background, provides a nice fade in and out
 	if (g_MenuData.nextbg != 255) {
+		// Menu is just being rendered and is transitioning to full
 		if (g_MenuData.nextbg == 0) {
+			// unk010 is being increased to provide a smooth transition to the full background
 			gdl = menuRenderBackgroundLayer1(gdl, g_MenuData.bg, 1.0f - g_MenuData.unk010);
 		} else {
+			// next_bg = 1, bg = 0
 			gdl = menuRenderBackgroundLayer1(gdl, g_MenuData.bg, 1.0f);
 			gdl = menuRenderBackgroundLayer1(gdl, g_MenuData.nextbg, g_MenuData.unk010);
 		}
 	} else {
+		// Solid color once menu has been fully displayed, a nice blue color for main menu
 		gdl = menuRenderBackgroundLayer1(gdl, g_MenuData.bg, 1.0f);
 	}
 
@@ -5420,7 +5429,7 @@ Gfx *menuRender(Gfx *gdl)
 
 		gSPSetGeometryMode(gdl++, G_ZBUFFER);
 
-		// Everyone 1 in 100 frames on average, calculate a new X/Y for the hudpiece
+		// Every 1 in 100 frames on average, calculate a new X/Y for the hudpiece
 		// Note: unintentional 64-bit float comparison done here
 		if (RANDOMFRAC() < 0.01) {
 			g_MenuData.hudpiece.newposx = RANDOMFRAC() * 80.0f + -205.5f - 40.0f;
@@ -5511,6 +5520,7 @@ Gfx *menuRender(Gfx *gdl)
 #endif
 		gdl = func0f0d479c(gdl);
 	}
+
 
 	if (g_MenuData.count > 0) {
 		// Render dialogs

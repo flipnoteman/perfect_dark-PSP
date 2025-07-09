@@ -99,6 +99,7 @@ u32 var8005dd50 = 0x00000000;
 s32 g_MainChangeToStageNum = -1;
 bool g_MainIsDebugMenuOpen = false;
 
+/// Stage allocation definition LUT
 struct stageallocation g_StageAllocations8Mb[] = {
 	{ STAGE_CITRAINING,    "-ml0 -me0 -mgfx120 -mvtx98 -ma400"             },
 	{ STAGE_DEFECTION,     "-ml0 -me0 -mgfx110 -mgfxtra80 -mvtx100 -ma700" },
@@ -273,6 +274,7 @@ void mainInit(void)
 	g_MainIsBooting = 0;
 }
 
+// Initialize and begin "main loop"
 void mainProc(void)
 {
 	mainInit();
@@ -381,17 +383,20 @@ void mainLoop(void)
 				}
 
 				argSetString(g_StageAllocations4Mb[index].string);
-			} else {
-				// 8MB
+			} else { // 8MB
+
+				// Same as next loop but adding 400 to the stagenum when doing lookup.
+				// Could be offsetting for just multiplayer maps?
 				if (g_StageNum < STAGE_TITLE && getNumPlayers() >= 2) {
-					index = 0; \
-					while (g_StageAllocations8Mb[index].stagenum) { \
-						if (g_StageNum + 400 == g_StageAllocations8Mb[index].stagenum) { \
-							break; \
-						} \
+					index = 0;
+					while (g_StageAllocations8Mb[index].stagenum) {
+						if (g_StageNum + 400 == g_StageAllocations8Mb[index].stagenum) {
+							break;
+						}
 						index++;
 					}
 
+					// Set index to -1 if we did not find a stage definition
 					if (g_StageAllocations8Mb[index].stagenum == 0) {
 						index = -1;
 					}
@@ -400,6 +405,8 @@ void mainLoop(void)
 				if (index < 0) {
 					index = 0;
 
+					// Iterate through stage allocation definition until new stage is found, or
+					// we've run out of definitions
 					while (g_StageAllocations8Mb[index].stagenum) {
 						if (g_StageNum == g_StageAllocations8Mb[index].stagenum) {
 							break;
@@ -409,6 +416,7 @@ void mainLoop(void)
 					}
 				}
 
+				// Set mem allocation arguments based on stage
 				argSetString(g_StageAllocations8Mb[index].string);
 			}
 		}
@@ -417,16 +425,19 @@ void mainLoop(void)
 
 		mempResetPool(MEMPOOL_7);
 		mempResetPool(MEMPOOL_STAGE);
-		filesStop(4);
+		filesStop(4); // Reset file loaded values
 
+		// Get mema heap size from definition
 		if (argFindByPrefix(1, "-ma")) {
 			g_MainMemaHeapSize = strtol(argFindByPrefix(1, "-ma"), NULL, 0) * 1024;
 		}
 
+		// Zero mema
 		memaReset(mempAlloc(g_MainMemaHeapSize, MEMPOOL_STAGE), g_MainMemaHeapSize);
 		langReset(g_StageNum);
 		playermgrReset();
 
+		// Get number of players, or make sure its 0 if already started playing
 		if (g_StageNum >= STAGE_TITLE) {
 			numplayers = 0;
 		} else {
@@ -441,11 +452,11 @@ void mainLoop(void)
 			}
 		}
 
-		if (numplayers < 2) {
+		if (numplayers < 2) { // Solo
 			g_Vars.bondplayernum = 0;
 			g_Vars.coopplayernum = -1;
 			g_Vars.antiplayernum = -1;
-		} else if (argFindByPrefix(1, "-coop")) {
+		} else if (argFindByPrefix(1, "-coop")) { // Coop
 			g_Vars.bondplayernum = 0;
 			g_Vars.coopplayernum = 1;
 			g_Vars.antiplayernum = -1;
@@ -457,10 +468,12 @@ void mainLoop(void)
 
 		playermgrAllocatePlayers(numplayers);
 
+		// Set number of bots
 		if (argFindByPrefix(1, "-mpbots")) {
 			g_Vars.lvmpbotlevel = 1;
 		}
 
+		// Setup multiplayer cooperative or counter-operative
 		if (g_Vars.coopplayernum >= 0 || g_Vars.antiplayernum >= 0) {
 			g_MpSetup.chrslots = 0x03;
 			mpReset();
@@ -495,11 +508,18 @@ void mainLoop(void)
 		frametimeCalculate();
 		profileReset();
 
+		// If we aren't changing stages currently
 		while (g_MainChangeToStageNum < 0) {
+			// Get the amount of cycles since last frame to lock logic to 60fps
 			const s32 cycles = osGetCount() - g_Vars.thisframestartt;
+
+			// Check if we have surpassed our 60hz minimum
 			if (!g_Vars.mininc60 || (cycles >= g_Vars.mininc60 * CYCLES_PER_FRAME - CYCLES_PER_FRAME / 2)) {
+				// Check if any window parameters have changed, make sure video is initialized
 				schedStartFrame(&g_Sched);
+				// Main game logic
 				mainTick();
+
 				schedEndFrame(&g_Sched);
 			}
 			if (g_TickExtraSleep) {
@@ -507,6 +527,7 @@ void mainLoop(void)
 			}
 		}
 
+		// Cleanup current stage
 		lvStop();
 		mempDisablePool(MEMPOOL_STAGE);
 		mempDisablePool(MEMPOOL_7);
@@ -514,13 +535,15 @@ void mainLoop(void)
 		viBlack(true);
 		pak0f116994();
 
-		g_StageNum = g_MainChangeToStageNum;
+		// Set for next stage
+		g_StageNum = g_MainChangeToStageNum; // Request next stage
 		g_MainChangeToStageNum = -1;
 	}
 }
 
 void mainTick(void)
 {
+	// Null Display List
 	Gfx *gdl = NULL;
 	Gfx *gdlstart = NULL;
 	OSScMsg msg = {OS_SC_DONE_MSG};
@@ -536,9 +559,12 @@ void mainTick(void)
 		if (g_MainGameLogicEnabled) {
 			gdl = gdlstart = gfxGetMasterDisplayList();
 
+			// Setup the tmem address 0x0000 for RGBA texture; tile 7 (G_TX_LOADTILE)
 			gDPSetTile(gdl++, G_IM_FMT_RGBA, G_IM_SIZ_16b, 0, 0x0000, G_TX_LOADTILE, 0, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOLOD);
+			// Setup tmem address 0x01000 for a CI4 texture; tile 6
 			gDPSetTile(gdl++, G_IM_FMT_RGBA, G_IM_SIZ_4b, 0, 0x0100, 6, 0, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOMIRROR | G_TX_WRAP, G_TX_NOMASK, G_TX_NOLOD);
 
+			// Tick level logic
 			lvTick();
 			playermgrShuffle();
 

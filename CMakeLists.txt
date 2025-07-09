@@ -195,6 +195,12 @@ if(BUILD_PSP)
       set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O3")
   endif()
 
+  if(CMAKE_BUILD_TYPE MATCHES "Debug")
+      add_compile_options(
+        -Og
+      )
+  endif()
+
 else() # Non-PSP builds
   if(NOT (CMAKE_BUILD_TYPE STREQUAL "Debug"))
     add_compile_options(-Og) # Keep original desktop setting

@@ -1,4 +1,3 @@
-
 #include <pspsdk.h>
 #include <pspkernel.h>
 #include <pspdebug.h>
@@ -27,6 +26,9 @@
 #include "bss.h"
 #include "data.h"
 
+#include "os_system.h"
+#include "pspkerneltypes.h"
+#include "pspsysmem_kernel.h"
 #include "video.h"
 #include "audio.h"
 #include "input.h"
@@ -49,9 +51,6 @@ PSP_MODULE_INFO("PD_PSP", 0, 1, 0); // Changed name slightly, version 1.0
 PSP_HEAP_SIZE_KB(-1024); // Example: Request memory leaving 1MB for kernel/drivers. Adjust as needed.
 PSP_MAIN_THREAD_ATTR(THREAD_ATTR_USER | THREAD_ATTR_VFPU); // Enable VFPU for the main thread if needed
 PSP_MAIN_THREAD_STACK_SIZE_KB(256); // Increase stack size if needed (default is 64KB)
-
-
-
 
 u32 g_OsMemSize = 0;
 s32 g_OsMemSizeMb = 12;
@@ -137,6 +136,7 @@ int main(int argc, const char **argv)
 	pspFpuSetEnable(0);
 	//VolatileMemInit();
 	sysInitArgs(argc, argv);
+// 	pspDebugScreenPrintf("User Memory: %d kb\n", free_mem);
 
 	if (!sysArgCheck("--no-crash-handler")) {
 		//crashInit();
@@ -173,12 +173,12 @@ int main(int argc, const char **argv)
 
 	g_MempHeapSize = g_OsMemSize;
 
-	//PSP Phat 
+	// PSP Phat
+	// TODO: Detect which model its running on and correct accordingly
 	//g_MempHeap = malloc_volatile_PSP(g_MempHeapSize);
-	
+
 	//PSP SLIM
 	g_MempHeap = sysMemZeroAlloc(g_MempHeapSize);
-
 
 	if (!g_MempHeap) {
 		sysFatalError("Could not alloc %u bytes for memp heap.", g_MempHeapSize);
@@ -190,6 +190,9 @@ int main(int argc, const char **argv)
 	g_SndDisabled = sysArgCheck("--no-sound");
 
 	g_StageNum = sysArgGetInt("--boot-stage", STAGE_TITLE);
+
+	// Skips straight to computer
+	g_SkipIntro = 1;
 
 	if (g_StageNum == STAGE_TITLE && (sysArgCheck("--skip-intro") || g_SkipIntro)) {
 		// shorthand for --boot-stage 0x26

@@ -447,6 +447,7 @@ s32 osPiReadIo(u32 devaddr, u32 *data)
 
 uintptr_t osVirtualToPhysical(void *addr)
 {
+	// TODO: Check if unsigned long pointer is causing issues
 	return (uintptr_t)addr;
 }
 

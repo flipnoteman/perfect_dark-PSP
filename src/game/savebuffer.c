@@ -11,6 +11,7 @@
 #include "lib/main.h"
 #include "lib/mtx.h"
 #include "data.h"
+#include "system.h"
 #include "types.h"
 
 #if VERSION >= VERSION_NTSC_1_0
@@ -24,6 +25,7 @@ s32 var8009de94;
 s32 g_MenuProjectFromX;
 s32 g_MenuProjectFromY;
 
+/// Initialize screen-space camera matrix for menu
 void func0f0d4690(Mtxf *mtx)
 {
 	struct coord pos;

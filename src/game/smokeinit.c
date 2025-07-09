@@ -22,6 +22,7 @@ Gfx var80061380[] = {
 	gsSPEndDisplayList(),
 };
 
+/// Setup texture
 Gfx var800613a0[] = {
 	gsDPSetCycleType(G_CYC_1CYCLE),
 	gsDPPipelineMode(G_PM_1PRIMITIVE),
