@@ -1878,8 +1878,6 @@ static void gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t vtx3_idx,
              vtx->color.g / 255.f,
              vtx->color.b / 255.f,
              vtx->color.a / 255.f};
-   sysLogPrintf(LOG_NOTE, "   raw vtx %d → x/w=%.3f y/w=%.3f\n",
-            i, vtx->x / vtx->w, vtx->y / vtx->w);
   }
 
   // --- lambda to push one vertex (9 floats) -------------------------------

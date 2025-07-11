@@ -8,7 +8,7 @@ rm -rf build-psp
 psp-cmake -S . -B build-psp \
     -DBUILD_PSP=ON \
     -DROMID=ntsc-final \
-    -DCMAKE_BUILD_TYPE=Debug \
+    -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_PRX=1 \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=1 
 
